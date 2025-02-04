@@ -1,0 +1,56 @@
+from Bio import SeqIO
+from Bio.Seq import Seq
+import matplotlib.pyplot as plt
+import random
+
+# File path for the codon-aligned sequences
+aligned_file = r"C:\Users\lrmacha\Downloads\codon_aligned_Human_GPR55_orthologues_trimmed.txt"
+
+# Read sequences from file
+sequences = []
+labels = []
+
+for record in SeqIO.parse(aligned_file, "fasta"):
+    labels.append(record.id)
+    sequences.append(str(record.seq).replace(" ", ""))  # Remove spaces for visualization
+
+# Determine sequence length
+seq_length = len(sequences[0])  # Assume all sequences are the same length
+
+# Generate unique colors for codons
+codon_colors = {}
+
+def get_color(codon):
+    """Assigns a random color to each unique codon."""
+    if codon not in codon_colors:
+        codon_colors[codon] = (random.random(), random.random(), random.random())  # Random RGB color
+    return codon_colors[codon]
+
+# Create figure
+fig, ax = plt.subplots(figsize=(seq_length / 6, len(sequences) / 3))
+
+# Plot codon sequences with black text on colored boxes
+for i, seq in enumerate(sequences):
+    for j in range(0, len(seq), 3):  # Iterate over codons (triplets)
+        codon = seq[j:j+3]  # Extract codon
+        if len(codon) < 3:  # Skip incomplete codons at the end
+            continue
+        color = get_color(codon)  # Assign consistent color
+        ax.add_patch(plt.Rectangle((j // 3, -i - 0.5), 1, 1, color=color))  # Draw colored box
+        ax.text((j // 3) + 0.5, -i, codon, fontsize=10, family='monospace', ha='center', va='center', color='black')
+
+# Formatting
+codon_length = seq_length // 3  # Convert base length to codon length
+ax.set_xlim(0, codon_length)  
+ax.set_ylim(-len(sequences), 1)
+ax.set_yticks(range(-len(sequences) + 1, 1))
+ax.set_yticklabels(labels, fontsize=8)
+ax.set_xticks([])
+ax.set_frame_on(False)
+
+# Codon position scale (every 10 codons)
+for j in range(0, seq_length // 3, 1):
+    ax.text(j + 0.5, 1, str(j + 1), fontsize=6, ha='center', va='bottom', color='black')
+
+plt.tight_layout()
+plt.show()
